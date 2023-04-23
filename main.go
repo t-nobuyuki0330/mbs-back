@@ -10,5 +10,5 @@ func main() {
 
     router.GET("/funbook/api/search", controller.SearchFunctions )
 
-    router.Run(":3000")
+    router.Run(":9669")
 }
