@@ -8,7 +8,7 @@ import (
 func main() {
     router := gin.Default()
 
-    router.GET("/funbook/api/search", controller.SearchFunctions )
+    router.POST("/funbook/api/search", controller.SearchFunctions )
 
     router.Run(":9669")
 }
