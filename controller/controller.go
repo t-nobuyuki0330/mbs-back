@@ -39,7 +39,7 @@ func SearchFunctions(c *gin.Context) {
         panic("Error loading .env file")
     }
 
-    data := CreateSearchData("c", "sizeof", []string{"python", "java"})
+    data := CreateSearchData( c.PostForm( "language" ), c.PostForm( "function" ), c.PostFormArray( "response[]" ) )
 
     payload, err := json.Marshal(data)
     if err != nil {
