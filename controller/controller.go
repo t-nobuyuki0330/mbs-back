@@ -39,6 +39,12 @@ func SearchFunctions(c *gin.Context) {
         panic("Error loading .env file")
     }
 
+    if c.PostFormArray( "response[]" ) == nil {
+        fmt.Println("Error:", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "response[] isn't array"})
+        return
+    }
+
     data := CreateSearchData( c.PostForm( "language" ), c.PostForm( "function" ), c.PostFormArray( "response[]" ) )
 
     payload, err := json.Marshal(data)
@@ -100,6 +106,22 @@ func SearchFunctions(c *gin.Context) {
 
 func CreateSearchData(choiceLanguage string, searchFunction string, responseLanguages []string) map[string]interface{} {
     messageDataArray := []map[string]interface{}{
+        {
+            "role":    "system",
+            "content": `The response content is in Japanese language`,
+        },
+        {
+            "role":    "system",
+            "content": `The return value must be in JSON format`,
+        },
+        {
+            "role":    "system",
+            "content": `The return value must not contain any data other than JSON`,
+        },
+        {
+            "role":    "system",
+            "content": `If an error occurs, please output only in JSON format with the key "error"`,
+        },
         {
             "role":    "user",
             "content": `{"language": "python", "function": "print", "response": ["python", "java"]}`,
