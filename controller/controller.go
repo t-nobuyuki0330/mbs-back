@@ -39,6 +39,12 @@ func SearchFunctions(c *gin.Context) {
         panic("Error loading .env file")
     }
 
+    if c.PostFormArray( "response[]" ) == nil {
+        fmt.Println("Error:", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "response[] isn't array"})
+        return
+    }
+
     data := CreateSearchData( c.PostForm( "language" ), c.PostForm( "function" ), c.PostFormArray( "response[]" ) )
 
     payload, err := json.Marshal(data)
@@ -101,6 +107,22 @@ func SearchFunctions(c *gin.Context) {
 func CreateSearchData(choiceLanguage string, searchFunction string, responseLanguages []string) map[string]interface{} {
     messageDataArray := []map[string]interface{}{
         {
+            "role":    "system",
+            "content": `The response content is in Japanese language`,
+        },
+        {
+            "role":    "system",
+            "content": `The return value must be in JSON format`,
+        },
+        {
+            "role":    "system",
+            "content": `The return value must not contain any data other than JSON`,
+        },
+        {
+            "role":    "system",
+            "content": `If an error occurs, please output only in JSON format with the key "error"`,
+        },
+        {
             "role":    "user",
             "content": `{"language": "python", "function": "print", "response": ["python", "java"]}`,
         },
@@ -110,11 +132,11 @@ func CreateSearchData(choiceLanguage string, searchFunction string, responseLang
         },
         {
             "role":    "user",
-            "content": `{"language": "python", "function": "for", "response": ["python", "java"]}`,
+            "content": `{"language": "python", "function": "for", "response": ["c", "rust", "javascript"]}`,
         },
         {
             "role": "assistant",
-            "content": `{"python":{"function":"for","args":"オブジェクト","return":"なし","example":"for x in iterable:\n    print(x)"},"java":{"function":"for","args":"初期化式; 条件式; 変化式;","return":"なし","example":"for (int i = 0; i < 10; i++) {\n    System.out.println(i);\n}"}}`,
+            "content": `{"c":{"function":"for","args":"初期化式; 条件式; 変化式;","return":"なし","example":"for (int i = 0; i < 10; i++) {\n    printf(\"%%d\n\", i);\n}"},"rust":{"function":"for","args":"イテレータ","return":"なし","example":"for x in iterable {\n    println!(\"{}\", x);\n}"},"javascript":{"function":"for","args":"初期化式; 条件式; 変化式;","return":"なし","example":"for (let i = 0; i < 10; i++) {\n    console.log(i);\n}"}}`,
         },
         {
             "role":    "user",
@@ -124,7 +146,7 @@ func CreateSearchData(choiceLanguage string, searchFunction string, responseLang
 
     requestMessage := map[string]interface{}{
         "model":       "gpt-3.5-turbo",
-        "temperature": 0.0,
+        "temperature": 0.2,
         "messages":     messageDataArray,
     }
 
