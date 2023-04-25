@@ -9,7 +9,7 @@ import (
     "github.com/gin-contrib/cors"
 )
 
-const DEBUG = true
+const DEBUG = false
 
 func main() {
     router := gin.Default()
