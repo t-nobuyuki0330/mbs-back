@@ -12,9 +12,10 @@ func main() {
 
     router.Use(cors.New(cors.Config{
         // allow site
-        AllowOrigins: []string{
-            "https://funbook.pages.dev/",
-        },
+        // AllowOrigins: []string{
+        //     "https://funbook.pages.dev/",
+        // },
+        AllowAllOrigins: true,
         // allow http method
         AllowMethods: []string{
             "POST",
