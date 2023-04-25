@@ -61,7 +61,7 @@ func RegistCache( db *sql.DB, req_lang string, req_func string, req_resp string 
     return id, nil
 }
 
-func UpdateCache( db *sql.DB, id int, ans_resp map[string]interface{} ) error {
+func UpdateCache( db *sql.DB, id int, ans_resp string ) error {
     // JSONを文字列に変換する
     ans_respString, err := json.Marshal( ans_resp )
     if err != nil {

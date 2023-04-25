@@ -1,22 +1,5 @@
 package controller
 
-
-    // // DBに接続
-    // db, err := funbook_db.ConnectDB()
-    // if err != nil {
-    //     fmt.Println("Error:", err)
-    //     c.JSON(http.StatusInternalServerError, gin.H{"error": "Error connectDB"})
-    //     return
-    // }
-
-    // // DBから切断
-    // err = funbook_db.DisconnectDB(db)
-    // if err != nil {
-    //     fmt.Println("Error:", err)
-    //     c.JSON(http.StatusInternalServerError, gin.H{"error": "Error disconnectDB"})
-    //     return
-    // }
-
 import (
     "bytes"
     "encoding/json"
@@ -75,18 +58,24 @@ func SearchFunctions( c *gin.Context ) {
     }
     defer funbook_db.DisconnectDB( db );
 
+    fmt.Println ( c.PostForm( "cache" ) );
+
     // キャッシュが複数あればランダムで利用する。一つの場合はcacheは1つ
-    if c.DefaultPostForm( "cache", "false" ) == "true" {
+    if c.PostForm( "cache" ) == "true" {
         // キャッシュ検索
+        fmt.Println( "cache true" );
         cache, err := SelectCache ( db, c.PostForm( "language" ), c.PostForm( "function" ), response_language )
         if err == nil {
             // キャッシュの利用(利用回数ふやす)
             fmt.Println ( cache );
+            c.JSON( 200, gin.H{ "ok": "cache"} )
             return
         }
-        fmt.Println ( err );
+        fmt.Println( "cache no" );
+        fmt.Println( err );
     }
 
+    fmt.Println( "api do" );
     data := CreateSearchData( c.PostForm( "language" ), c.PostForm( "function" ), c.PostFormArray( "response[]" ) )
 
     payload, err := json.Marshal(data)
@@ -106,6 +95,7 @@ func SearchFunctions( c *gin.Context ) {
     req.Header.Set( "Authorization", "Bearer " + os.Getenv( "API_KEY" ) )
     req.Header.Set( "Content-Type", "application/json" )
 
+    fmt.Println( "cache 1" );
     // Cache 1
     var cache_id int
     if connect_db_flag {
@@ -115,6 +105,7 @@ func SearchFunctions( c *gin.Context ) {
         }
     }
 
+    fmt.Println( "cache 1 do" );
     client := &http.Client{}
     resp, err := client.Do( req )
     if err != nil {
@@ -152,7 +143,7 @@ func SearchFunctions( c *gin.Context ) {
     }
 
     if connect_db_flag {
-        if err := UpdateCache ( db, cache_id, messageJSON ); err != nil {
+        if err := UpdateCache ( db, cache_id, message.( string ) ); err != nil {
             fmt.Println( "Error:", err )
         }
     }
