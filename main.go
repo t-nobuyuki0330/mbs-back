@@ -2,8 +2,9 @@ package main
 
 import (
     "github.com/t-nobuyuki0330/mbs-back/controller"
-    "github.com/t-nobuyuki0330/mbs-back/funbook_db"
     "github.com/gin-gonic/gin"
+    "os"
+    "github.com/joho/godotenv"
 )
 
 const DEBUG = false
