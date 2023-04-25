@@ -7,7 +7,7 @@ import (
     "github.com/joho/godotenv"
 )
 
-const DEBUG = false
+const DEBUG = true
 
 func main() {
     router := gin.Default()
