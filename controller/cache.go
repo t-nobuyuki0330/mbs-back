@@ -46,3 +46,41 @@ func SelectCache( db *sql.DB, req_lang string, req_func string, req_resp string 
     // ランダムに選択した値を返す
     return results[randomIndex], nil
 }
+
+func RegistCache( db *sql.DB, req_lang string, req_func string, req_resp string ) ( int, error ) {
+    // SQLクエリを作成する
+    var id int
+    query := "INSERT INTO cache ( req_lang, req_func, req_resp, req_count, ans_json ) VALUES ( $1, $2, $3, $4, $5 ) RETURNING id"
+
+    // SQLクエリを実行する
+    err := db.QueryRow( query, req_lang, req_func, req_resp, 0, nil ).Scan( &id )
+    if err != nil {
+        return 0, err
+    }
+
+    return id, nil
+}
+
+func UpdateCache( db *sql.DB, id int, ans_resp map[string]interface{} ) error {
+    // JSONを文字列に変換する
+    ans_respString, err := json.Marshal( ans_resp )
+    if err != nil {
+        return err
+    }
+
+    // キャッシュレコードを更新する
+    result, err := db.Exec( "UPDATE public.cache SET ans_json = $1 WHERE id = $2", ans_respString, id )
+    if err != nil {
+        return err
+    }
+
+    rowsAffected, err := result.RowsAffected()
+    if err != nil {
+        return err
+    }
+    if rowsAffected == 0 {
+        return errors.New( "cache record not found" )
+    }
+
+    return nil
+}

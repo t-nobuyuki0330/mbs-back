@@ -65,22 +65,26 @@ func SearchFunctions( c *gin.Context ) {
         return
     }
 
+    response_language := fmt.Sprintf ( "%v", c.PostFormArray( "response[]" ) )
+
+    connect_db_flag := true
+    db, err := funbook_db.ConnectDB();
+    if err != nil {
+        fmt.Println( "Error:", err )
+        connect_db_flag = false
+    }
+    defer funbook_db.DisconnectDB( db );
+
     // キャッシュが複数あればランダムで利用する。一つの場合はcacheは1つ
     if c.DefaultPostForm( "cache", "false" ) == "true" {
         // キャッシュ検索
-        db, err := funbook_db.ConnectDB();
-        if err != nil {
-            fmt.Println( "Error:", err )
-        } else {
-            response_language := fmt.Sprintf ( "%v", c.PostFormArray( "response[]" ) )
-            cache, err := SelectCache ( db, c.PostForm( "language" ), c.PostForm( "function" ), response_language )
-            if err == nil {
-                // キャッシュの利用(利用回数ふやす)
-                fmt.Println ( cache );
-                return
-            }
-            fmt.Println ( err );
+        cache, err := SelectCache ( db, c.PostForm( "language" ), c.PostForm( "function" ), response_language )
+        if err == nil {
+            // キャッシュの利用(利用回数ふやす)
+            fmt.Println ( cache );
+            return
         }
+        fmt.Println ( err );
     }
 
     data := CreateSearchData( c.PostForm( "language" ), c.PostForm( "function" ), c.PostFormArray( "response[]" ) )
@@ -102,7 +106,14 @@ func SearchFunctions( c *gin.Context ) {
     req.Header.Set( "Authorization", "Bearer " + os.Getenv( "API_KEY" ) )
     req.Header.Set( "Content-Type", "application/json" )
 
-    // キャッシュ1
+    // Cache 1
+    var cache_id int
+    if connect_db_flag {
+        cache_id, err = RegistCache( db, c.PostForm( "language" ), c.PostForm( "function" ), response_language )
+        if err != nil {
+            fmt.Println( "Error:", err )
+        }
+    }
 
     client := &http.Client{}
     resp, err := client.Do( req )
@@ -134,13 +145,17 @@ func SearchFunctions( c *gin.Context ) {
 
     // unmarshal message string to JSON object
     var messageJSON interface{}
-    if err := json.Unmarshal([]byte( message.( string ) ), &messageJSON ); err != nil {
+    if err := json.Unmarshal( []byte( message.( string ) ), &messageJSON ); err != nil {
         fmt.Println( "Error:", err )
         c.JSON( http.StatusInternalServerError, gin.H{ "error": "Failed to unmarshal message to JSON" } )
         return
     }
 
-    // キャッシュ2 ( jsonがnilならエラーと判定、同じ内容のリクエストが3つ以下)
+    if connect_db_flag {
+        if err := UpdateCache ( db, cache_id, messageJSON ); err != nil {
+            fmt.Println( "Error:", err )
+        }
+    }
     // return HTTP response
     c.JSON( http.StatusOK, gin.H{ "message": messageJSON } )
 }

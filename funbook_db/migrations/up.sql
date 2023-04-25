@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS cache (
     req_func VARCHAR(128) NOT NULL,
     req_resp VARCHAR(128) NOT NULL,
     req_count INT NOT NULL,
-    ans_json JSON NOT NULL
+    ans_json JSON
 );
