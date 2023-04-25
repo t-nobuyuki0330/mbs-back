@@ -4,10 +4,6 @@ import (
     "github.com/t-nobuyuki0330/mbs-back/controller"
     "github.com/t-nobuyuki0330/mbs-back/funbook_db"
     "github.com/gin-gonic/gin"
-    "os"
-    _ "time"
-    "github.com/joho/godotenv"
-    "github.com/gin-contrib/cors"
 )
 
 const DEBUG = false
@@ -15,13 +11,7 @@ const DEBUG = false
 func main() {
     router := gin.Default()
 
-    config := cors.DefaultConfig()
-    config.AllowAllOrigins = true
-    router.Use(cors.New(config))
-
-    router.POST( "/funbook/api/search", controller.SearchFunctions )
-
-    funbook_db.Init ()
+    router.POST("/funbook/api/search", controller.SearchFunctions )
 
     err := godotenv.Load()
     if err != nil {
