@@ -6,6 +6,7 @@ import (
     "fmt"
     "os"
     "net/http"
+    "strings"
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
     "github.com/t-nobuyuki0330/mbs-back/funbook_db"
@@ -63,19 +64,17 @@ func SearchFunctions( c *gin.Context ) {
     // キャッシュが複数あればランダムで利用する。一つの場合はcacheは1つ
     if c.PostForm( "cache" ) == "true" {
         // キャッシュ検索
-        fmt.Println( "cache true" );
-        cache, err := SelectCache ( db, c.PostForm( "language" ), c.PostForm( "function" ), response_language )
+        cache, err := SelectCache ( db, strings.ToLower( c.PostForm( "language" ) ), strings.ToLower( c.PostForm( "function" ) ), strings.ToLower( response_language ) )
         if err == nil {
             // キャッシュの利用(利用回数ふやす)
+            // キャッシュをjsonにして返却
             fmt.Println ( cache );
             c.JSON( 200, gin.H{ "ok": "cache"} )
-            return
+            // return
         }
-        fmt.Println( "cache no" );
         fmt.Println( err );
     }
 
-    fmt.Println( "api do" );
     data := CreateSearchData( c.PostForm( "language" ), c.PostForm( "function" ), c.PostFormArray( "response[]" ) )
 
     payload, err := json.Marshal(data)
@@ -95,11 +94,10 @@ func SearchFunctions( c *gin.Context ) {
     req.Header.Set( "Authorization", "Bearer " + os.Getenv( "API_KEY" ) )
     req.Header.Set( "Content-Type", "application/json" )
 
-    fmt.Println( "cache 1" );
     // Cache 1
     var cache_id int
     if connect_db_flag {
-        cache_id, err = RegistCache( db, c.PostForm( "language" ), c.PostForm( "function" ), response_language )
+        cache_id, err = RegistCache( db, strings.ToLower( c.PostForm( "language" ) ), strings.ToLower( c.PostForm( "function" ) ), strings.ToLower( response_language ) )
         if err != nil {
             fmt.Println( "Error:", err )
         }
