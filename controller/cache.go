@@ -53,7 +53,7 @@ func RegistCache( db *sql.DB, req_lang string, req_func string, req_resp string 
     query := "INSERT INTO cache ( req_lang, req_func, req_resp, req_count, ans_json ) VALUES ( $1, $2, $3, $4, $5 ) RETURNING id"
 
     // SQLクエリを実行する
-    err := db.QueryRow( query, req_lang, req_func, req_resp, 0, nil ).Scan( &id )
+    err := db.QueryRow( query, req_lang, req_func, req_resp, 1, nil ).Scan( &id )
     if err != nil {
         return 0, err
     }
