@@ -19,7 +19,7 @@ func main() {
         panic( "Error loading .env file" )
     } else {
         if !DEBUG {
-            router.RunTLS( ":" + os.Getenv( "APP_PORT" ), os.Getenv( "SERVER_PEM" ), os.Getenv( "SERVER_KEY" ) )
+            router.RunTLS( ":" + os.Getenv( "APP_PORT" ), os.Getenv( "SERVER_CRT" ), os.Getenv( "SERVER_KEY" ) )
         } else {
             router.Run( ":" + os.Getenv( "APP_PORT" ) )
         }
