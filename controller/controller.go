@@ -7,6 +7,7 @@ import (
     "os"
     "net/http"
     "strings"
+    "time"
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
     "github.com/t-nobuyuki0330/mbs-back/funbook_db"
@@ -69,7 +70,7 @@ func SearchFunctions( c *gin.Context ) {
             // キャッシュの利用(利用回数ふやす)
             // キャッシュをjsonにして返却
             fmt.Println ( cache );
-            c.JSON( 200, gin.H{ "ok": "cache"} )
+            c.JSON( http.StatusOK, gin.H{ "ok": "cache"} )
             // return
         }
         fmt.Println( err );
@@ -77,6 +78,8 @@ func SearchFunctions( c *gin.Context ) {
 
     data := CreateSearchData( c.PostForm( "language" ), c.PostForm( "function" ), c.PostFormArray( "response[]" ) )
 
+
+    // TODO: 冗長化しているコードのリファクタリング
     payload, err := json.Marshal(data)
     if err != nil {
         fmt.Println( "Error:", err )
@@ -103,17 +106,45 @@ func SearchFunctions( c *gin.Context ) {
         }
     }
 
-    fmt.Println( "cache 1 do" );
+    var try_count int
+    var resp *http.Response
+    var req_err error
     client := &http.Client{}
-    resp, err := client.Do( req )
-    if err != nil {
-        fmt.Println( "Error:", err )
-        c.JSON( http.StatusInternalServerError, gin.H{ "error": "Failed to send HTTP request" } )
+    for try_count = 0; try_count < 10; try_count++ {
+        resp, req_err = client.Do( req )
+        if resp.StatusCode == http.StatusTooManyRequests {
+            // TODO: 冗長化しているコードのリファクタリング
+            resp.Body.Close()
+            resp = nil
+            req_err = nil
+
+            req, err = http.NewRequest( "POST", TurboApiUrl, bytes.NewBuffer( payload ) )
+            if err != nil {
+                fmt.Println( "Error:", err )
+                c.JSON( http.StatusInternalServerError, gin.H{ "error": "Failed to create HTTP request" } )
+                return
+            }
+        
+            req.Header.Set( "Authorization", "Bearer " + os.Getenv( "API_KEY" ) )
+            req.Header.Set( "Content-Type", "application/json" )
+
+            time.Sleep( time.Duration(try_count+1) * time.Second )
+            continue
+        }
+        break
+    }
+
+    if try_count == 1 {
+        fmt.Println("Error:", req_err)
+        c.JSON( http.StatusTooManyRequests, gin.H{"message": gin.H{ "error": "too many request" } } )
+        return
+    }
+    if req_err != nil {
+        fmt.Println("Error:", req_err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send HTTP request"})
         return
     }
     defer resp.Body.Close()
-
-    fmt.Println( "Status code:", resp.StatusCode )
 
     // parse response body
     var responseBody map[string]interface{}
@@ -164,6 +195,10 @@ func CreateSearchData( choiceLanguage string, searchFunction string, responseLan
             "content": `If an error occurs, please output only in JSON format with the key "error"`,
         },
         {
+            "role":    "system",
+            "content": `return only json even in case of error`,
+        },
+        {
             "role":    "user",
             "content": `What is the [python,java] function that performs the same processing as the python "print" function? json:`,
         },
@@ -181,8 +216,17 @@ func CreateSearchData( choiceLanguage string, searchFunction string, responseLan
         },
         {
             "role":    "user",
+            "content": `What is the [c,rust,javascript] function that performs the same processing as the python "xyzabcd" function? json:`,
+        },
+        {
+            "role": "assistant",
+            "content": `{"error":"関数xyzabcdがみつかりませんでした"}`,
+        },
+        {
+            "role":    "user",
             "content": `What is the ` + fmt.Sprintf("%v", responseLanguages) + ` function that performs the same processing as the ` + choiceLanguage + ` "` + searchFunction + `"? json:`,
         },
+
     }
 
     requestMessage := map[string]interface{}{
