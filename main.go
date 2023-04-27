@@ -9,8 +9,6 @@ import (
     _ "github.com/gin-contrib/cors"
 )
 
-const DEBUG = false
-
 func main() {
     router := gin.Default()
 
@@ -30,7 +28,7 @@ func main() {
     if err != nil {
         panic( "Error loading .env file" )
     } else {
-        if !DEBUG {
+        if os.Getenv( "TLS" ) == "true" {
             router.RunTLS( ":" + os.Getenv( "APP_PORT" ), os.Getenv( "SERVER_CRT" ), os.Getenv( "SERVER_KEY" ) )
         } else {
             router.Run( ":" + os.Getenv( "APP_PORT" ) )
