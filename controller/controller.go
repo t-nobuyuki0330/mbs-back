@@ -157,10 +157,6 @@ func CreateSearchData( choiceLanguage string, searchFunction string, responseLan
         },
         {
             "role":    "system",
-            "content": `The return value must be in JSON format`,
-        },
-        {
-            "role":    "system",
             "content": `The return value must not contain any data other than JSON`,
         },
         {
@@ -169,7 +165,7 @@ func CreateSearchData( choiceLanguage string, searchFunction string, responseLan
         },
         {
             "role":    "user",
-            "content": `{"language": "python", "function": "print", "response": ["python", "java"]}`,
+            "content": `What is the [python,java] function that performs the same processing as the python "print" function? json:`,
         },
         {
             "role": "assistant",
@@ -177,7 +173,7 @@ func CreateSearchData( choiceLanguage string, searchFunction string, responseLan
         },
         {
             "role":    "user",
-            "content": `{"language": "python", "function": "for", "response": ["c", "rust", "javascript"]}`,
+            "content": `What is the [c,rust,javascript] function that performs the same processing as the python "for" function? json:`,
         },
         {
             "role": "assistant",
@@ -185,7 +181,7 @@ func CreateSearchData( choiceLanguage string, searchFunction string, responseLan
         },
         {
             "role":    "user",
-            "content": `{"language": "` + choiceLanguage + `", "function": "` + searchFunction + `", "response": ` + fmt.Sprintf("%v", responseLanguages) + `}`,
+            "content": `What is the ` + fmt.Sprintf("%v", responseLanguages) + ` function that performs the same processing as the ` + choiceLanguage + ` "` + searchFunction + `"? json:`,
         },
     }
 
