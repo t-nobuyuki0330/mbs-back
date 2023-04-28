@@ -134,7 +134,7 @@ func SearchFunctions( c *gin.Context ) {
         break
     }
 
-    if try_count == 1 {
+    if try_count == 10 {
         fmt.Println("Error:", req_err)
         c.JSON( http.StatusTooManyRequests, gin.H{"message": gin.H{ "error": "too many request" } } )
         return
